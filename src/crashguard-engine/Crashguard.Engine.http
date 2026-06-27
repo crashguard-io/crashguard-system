@@ -1,0 +1,6 @@
+@Crashguard.Engine_HostAddress = http://localhost:5191
+
+GET {{Crashguard.Engine_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

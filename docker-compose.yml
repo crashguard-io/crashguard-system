@@ -1,0 +1,13 @@
+services:
+  crashguard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "80:80"
+      - "5050:5050"
+    volumes:
+      - crashguard-data:/root/.local/share/Crashguard
+
+volumes:
+  crashguard-data:
