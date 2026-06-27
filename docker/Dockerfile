@@ -38,6 +38,12 @@ ENV ASPNETCORE_URLS=http://+:5050
 ENV ConnectionStrings__DefaultConnection="Data Source=/data/crashguard.db"
 VOLUME /data
 
-EXPOSE 80 5050
+RUN groupadd -r crashguard && useradd -r -g crashguard crashguard \
+    && mkdir -p /data /var/lib/nginx /var/log/nginx \
+    && chown -R crashguard:crashguard /data /var/www/html /var/lib/nginx /var/log/nginx /var/log/supervisor /app/engine /etc/nginx /etc/supervisor
+
+USER crashguard
+
+EXPOSE 8080 5050
 
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/crashguard.conf"]
