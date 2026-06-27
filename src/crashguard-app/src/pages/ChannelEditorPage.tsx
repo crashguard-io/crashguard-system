@@ -75,7 +75,7 @@ export default function ChannelEditorPage() {
             required
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="on-call-pagerduty"
+            placeholder="ops-critical"
             className="mt-1.5 w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white font-mono placeholder:text-gray-500 focus:outline-none focus:border-green-500"
           />
         </div>

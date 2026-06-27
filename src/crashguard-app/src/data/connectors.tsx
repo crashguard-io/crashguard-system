@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import type { ChannelConfig, ChannelType, EmailConfig, PagerDutyConfig, SlackConfig, WebhookConfig } from './channels'
+import type { ChannelConfig, ChannelType, EmailConfig, SlackConfig, WebhookConfig } from './channels'
 
 const inputClass =
   'mt-1.5 w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white font-mono placeholder:text-gray-500 focus:outline-none focus:border-green-500'
@@ -34,31 +34,6 @@ const slackConnector: Connector<'slack'> = {
         placeholder="https://hooks.slack.com/services/..."
         className={inputClass}
       />
-    </div>
-  ),
-}
-
-const pagerdutyConnector: Connector<'pagerduty'> = {
-  type: 'pagerduty',
-  label: 'PagerDuty',
-  description: 'Trigger an incident on a PagerDuty service via its Events API v2 integration key.',
-  ConfigFields: ({ config, onChange }: ConfigFieldsProps<PagerDutyConfig>) => (
-    <div>
-      <label htmlFor="integrationKey" className="block text-sm font-medium text-gray-300">
-        Integration Key
-      </label>
-      <input
-        id="integrationKey"
-        type="text"
-        required
-        value={config.integrationKey}
-        onChange={e => onChange({ ...config, integrationKey: e.target.value })}
-        placeholder="R0AB12CD34EF56GH78IJ"
-        className={inputClass}
-      />
-      <p className="mt-1.5 text-xs text-gray-500">
-        Found on the PagerDuty service's "Events API v2" integration.
-      </p>
     </div>
   ),
 }
@@ -145,7 +120,6 @@ const webhookConnector: Connector<'webhook'> = {
 
 export const connectorRegistry: Record<ChannelType, Connector> = {
   slack: slackConnector as Connector,
-  pagerduty: pagerdutyConnector as Connector,
   email: emailConnector as Connector,
   webhook: webhookConnector as Connector,
 }
