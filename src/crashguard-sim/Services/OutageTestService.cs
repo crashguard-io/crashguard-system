@@ -11,12 +11,13 @@ namespace Crashguard.Sim.Services;
 public class OutageTestService(
     EngineClient engineClient,
     CrashguardClient crashguardClient,
+    ChannelResolver channelResolver,
     OutageTestOptions options,
     IHostApplicationLifetime appLifetime,
     ILogger<OutageTestService> logger) : BackgroundService
 {
     private const string CanaryTypeName = "crashguard-sim-outage-1";
-    private const string OpsChannelName = "ops-crashguard-critical";
+    private const string CanarySeverity = "critical";
     private const int CanariesPerBatch = 10;
     private const int CanaryTimeoutSeconds = 60;
     private const int RenotifyIntervalSeconds = 60;
@@ -76,8 +77,7 @@ public class OutageTestService(
         logger.LogInformation("Sent final wave; expect it to trigger as a fresh alert after the prior batch has closed.");
 
         logger.LogInformation(
-            "All waves sent. Watch the '{Channel}' Slack channel for triggered alerts, dedup batching, and renotifications.",
-            OpsChannelName);
+            "All waves sent. Watch the 'cg-sim-critical' Slack channel for triggered alerts, dedup batching, and renotifications.");
 
         var maxWait = TimeSpan.FromSeconds(CanaryTimeoutSeconds) + TimeSpan.FromMinutes(2);
         var triggeredCount = await WaitForTriggeredAsync(allReferenceIds, maxWait, ct);
@@ -155,7 +155,7 @@ public class OutageTestService(
                 ExtendLimit = 0,
                 DedupInterval = dedupIntervalSeconds,
                 RenotifyInterval = RenotifyIntervalSeconds,
-                Severity = "critical",
+                Severity = CanarySeverity,
                 VerifierUrl = null,
                 DefaultChannelIds = existing.DefaultChannelIds,
             };
@@ -165,16 +165,7 @@ public class OutageTestService(
             return;
         }
 
-        var channels = await engineClient.GetChannelsAsync(ct);
-        var opsChannel = channels.FirstOrDefault(c => c.Name == OpsChannelName);
-        if (opsChannel is null)
-        {
-            logger.LogWarning(
-                "No channel named '{ChannelName}' is configured; outage canary type will be created without a default channel.",
-                OpsChannelName);
-        }
-
-        var defaultChannelIds = opsChannel is null ? [] : new List<int> { opsChannel.Id };
+        await channelResolver.LoadAsync(ct);
 
         var createRequest = new CreateCanaryTypeRequest
         {
@@ -183,9 +174,9 @@ public class OutageTestService(
             ExtendLimit = 0,
             DedupInterval = dedupIntervalSeconds,
             RenotifyInterval = RenotifyIntervalSeconds,
-            Severity = "critical",
+            Severity = CanarySeverity,
             VerifierUrl = null,
-            DefaultChannelIds = defaultChannelIds,
+            DefaultChannelIds = channelResolver.GetDefaultChannelIds(CanarySeverity),
         };
 
         await engineClient.CreateCanaryTypeAsync(createRequest, ct);

@@ -22,6 +22,7 @@ var engineBaseUrl = builder.Configuration["Engine:BaseUrl"] ?? "http://localhost
 builder.Services.AddSingleton(new RestClient(engineBaseUrl));
 builder.Services.AddSingleton<EngineClient>();
 builder.Services.AddSingleton<CrashguardClient>();
+builder.Services.AddSingleton<ChannelResolver>();
 
 var apiPort = builder.Configuration.GetValue<int?>("Api:Port") ?? 5055;
 builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(apiPort));

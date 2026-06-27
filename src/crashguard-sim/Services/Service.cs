@@ -5,9 +5,14 @@ using Crashguard.Sim.Models;
 
 namespace Crashguard.Sim.Services;
 
-public class Service(EngineClient engineClient, CrashguardClient crashguardClient, ILogger<Service> logger) : BackgroundService
+public class Service(
+    EngineClient engineClient,
+    CrashguardClient crashguardClient,
+    ChannelResolver channelResolver,
+    ILogger<Service> logger) : BackgroundService
 {
-    private const string OpsChannelName = "ops-crashguard-critical";
+    private static readonly string[] Severities = ["critical", "warning", "info"];
+
     private const int CanaryTypeCount = 10;
     private const double ResolveProbability = 0.6;
     private const double SpawnsPerMinute = 10;
@@ -57,16 +62,7 @@ public class Service(EngineClient engineClient, CrashguardClient crashguardClien
 
     private async Task EnsureCanaryTypesAsync(CancellationToken ct)
     {
-        var channels = await engineClient.GetChannelsAsync(ct);
-        var opsChannel = channels.FirstOrDefault(c => c.Name == OpsChannelName);
-        if (opsChannel is null)
-        {
-            logger.LogWarning(
-                "No channel named '{ChannelName}' is configured; sim canary types will be created without a default channel.",
-                OpsChannelName);
-        }
-
-        var defaultChannelIds = opsChannel is null ? new List<int>() : new List<int> { opsChannel.Id };
+        await channelResolver.LoadAsync(ct);
 
         var existingTypes = await engineClient.GetCanaryTypesAsync(ct);
         var existingNames = existingTypes.Select(t => t.Name).ToHashSet();
@@ -80,18 +76,22 @@ public class Service(EngineClient engineClient, CrashguardClient crashguardClien
                 continue;
             }
 
+            // Cycle through severities so the sim exercises all three Slack channels rather than
+            // dumping everything into one.
+            var severity = Severities[(i - 1) % Severities.Length];
+
             var request = new CreateCanaryTypeRequest
             {
                 Name = name,
                 Timeout = _random.Next(60, 601),
                 ExtendLimit = 0,
-                Severity = "critical",
+                Severity = severity,
                 VerifierUrl = null,
-                DefaultChannelIds = defaultChannelIds,
+                DefaultChannelIds = channelResolver.GetDefaultChannelIds(severity),
             };
 
             await engineClient.CreateCanaryTypeAsync(request, ct);
-            logger.LogInformation("Created canary type '{Name}' with timeout {Timeout}s.", name, request.Timeout);
+            logger.LogInformation("Created canary type '{Name}' with severity '{Severity}', timeout {Timeout}s.", name, severity, request.Timeout);
         }
     }
 

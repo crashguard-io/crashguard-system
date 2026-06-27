@@ -26,6 +26,23 @@ Engine__BaseUrl=http://localhost:5050
 This needs to match the engine's actual listen URL — if you changed the engine's port (via `ASPNETCORE_URLS`,
 `appsettings.json`, or `launchSettings.json`), update this to match.
 
+## Slack channels
+
+The sim assumes three Slack channels already exist in the engine — it looks them up by name on startup
+([`ChannelResolver`](Services/ChannelResolver.cs)), it never creates them:
+
+| Severity | Channel name |
+|---|---|
+| `critical` | `cg-sim-critical` |
+| `warning` | `cg-sim-warning` |
+| `info` | `cg-sim-information` |
+
+Each canary type the sim creates is assigned a severity, and its default channel is whichever of the three
+matches. The steady-state simulator ([`Service`](Services/Service.cs)) cycles its 10 canary types through all
+three severities so each channel actually sees traffic; the load and outage tests use `critical` only. If a
+channel is missing, the sim logs a warning and creates that canary type with no default channel rather than
+failing outright.
+
 ## The sim's own port(s)
 
 The sim is itself a small web app — it exposes a `/api/verify` endpoint that the engine calls back into during
