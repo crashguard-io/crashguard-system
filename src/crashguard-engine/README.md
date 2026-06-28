@@ -33,6 +33,7 @@ both need to point at.
 
 ## CORS
 
-The engine only accepts cross-origin requests from origins whose host is `localhost` (any port), or `origin: null`
-(see the `Frontend` CORS policy in [`Program.cs`](Program.cs)). If you're serving the Admin App from a host other
-than `localhost`, update that policy.
+The engine accepts cross-origin requests from any origin, including `origin: null` (needed for the Stream Deck
+plugin and other non-browser/file:// callers) — see the `Frontend` CORS policy in [`Program.cs`](Program.cs). This
+is intentional: the engine is meant to be an open API on a trusted internal network. If you need to expose it
+beyond that, put it behind a reverse proxy (e.g. nginx) that restricts access, or tighten the CORS policy yourself.

@@ -66,8 +66,7 @@ const string FrontendCorsPolicy = "Frontend";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
-        policy.SetIsOriginAllowed(origin =>
-                  origin == "null" || (Uri.TryCreate(origin, UriKind.Absolute, out var uri) && uri.Host == "localhost"))
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
